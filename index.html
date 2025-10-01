@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commander Game Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+        
+        .settings-btn {
+            background: #f0f0f0;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+        
+        .settings-btn:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            width: auto;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .setup-steps {
+            margin-bottom: 30px;
+        }
+        
+        .setup-step {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .setup-step h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .setup-step p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .setup-step ul {
+            margin-left: 20px;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+        
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+        
+        .url-input-group {
+            margin-top: 30px;
+        }
+        
+        .url-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .url-input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .url-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .save-url-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .save-url-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .setup-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .setup-status.incomplete {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        
+        .setup-status.complete {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .autocomplete-container {
+            position: relative;
+        }
+        
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .autocomplete-results.active {
+            display: block;
+        }
+        
+        .autocomplete-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+        
+        .autocomplete-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .form-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 Commander Tracker</h1>
+            <button class="settings-btn" onclick="openSettings()">⚙️</button>
+        </div>
+        
+        <div id="setupWarning" class="setup-status incomplete">
+            ⚠️ Setup required - Click the gear icon to get started
+        </div>
+        
+        <form id="gameForm" class="form-disabled">
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="bracket">Bracket (1-5)</label>
+                <select id="bracket" required>
+                    <option value="">Select...</option>
+                    <option value="1">1 - Casual</option>
+                    <option value="2">2 - Focused</option>
+                    <option value="3">3 - Optimized</option>
+                    <option value="4">4 - High Power</option>
+                    <option value="5">5 - Competitive</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="myCommander">Your Commander</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="myCommander" autocomplete="off" required>
+                    <div class="autocomplete-results" id="myCommanderResults"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="opponent1">Opponent 1 Commander</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="opponent1" autocomplete="off" required>
+                    <div class="autocomplete-results" id="opponent1Results"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="opponent2">Opponent 2 Commander</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="opponent2" autocomplete="off" required>
+                    <div class="autocomplete-results" id="opponent2Results"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="opponent3">Opponent 3 Commander</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="opponent3" autocomplete="off" required>
+                    <div class="autocomplete-results" id="opponent3Results"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="wentFirst">Which Commander Went First?</label>
+                <select id="wentFirst" required>
+                    <option value="">Select...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="winner">Winner</label>
+                <select id="winner" required>
+                    <option value="">Select...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="turnEnded">Turn Game Ended</label>
+                <input type="number" id="turnEnded" min="1" required>
+            </div>
+            
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Record Game</span>
+                <span class="loading" id="btnLoading" style="display: none;"></span>
+            </button>
+        </form>
+        
+        <div class="success-message" id="successMessage">
+            ✓ Game recorded successfully!
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            ✗ Error recording game. Please try again.
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeSettings()">×</button>
+            <h2>⚙️ Setup Instructions</h2>
+            
+            <div class="setup-step" style="background: #e3f2fd; border-left-color: #2196f3;">
+                <h3 style="color: #2196f3;">ℹ️ Note About Commander Autocomplete</h3>
+                <p>The commander name autocomplete feature requires a commander list URL. Ask the person who shared this app with you for the commander list URL, or set up your own following the separate instructions.</p>
+            </div>
+            
+            <div class="setup-steps">
+                <div class="setup-step">
+                    <h3>Step 1: Create or Open Your Google Sheet</h3>
+                    <p>Go to <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> and create a new sheet or open an existing one.</p>
+                </div>
+                
+                <div class="setup-step">
+                    <h3>Step 2: Open Apps Script</h3>
+                    <p>In your Google Sheet, click:</p>
+                    <p><strong>Extensions → Apps Script</strong></p>
+                </div>
+                
+                <div class="setup-step">
+                    <h3>Step 3: Paste This Code</h3>
+                    <p>Delete any existing code and paste this:</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre style="margin: 0;">function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Commander Game Log');
+  
+  // Create the sheet if it doesn't exist
+  if (!sheet) {
+    sheet = ss.insertSheet('Commander Game Log');
+    // Add headers
+    sheet.appendRow([
+      'Date',
+      'Bracket',
+      'Your Commander',
+      'Opponent 1',
+      'Opponent 2',
+      'Opponent 3',
+      'Went First',
+      'Winner',
+      'Turn Ended'
+    ]);
+    // Format headers
+    const headerRange = sheet.getRange(1, 1, 1, 9);
+    headerRange.setFontWeight('bold');
+    headerRange.setBackground('#667eea');
+    headerRange.setFontColor('#ffffff');
+  }
+  
+  const data = JSON.parse(e.postData.contents);
+  
+  sheet.appendRow([
+    data.date,
+    data.bracket,
+    data.myCommander,
+    data.opponent1,
+    data.opponent2,
+    data.opponent3,
+    data.wentFirst,
+    data.winner,
+    data.turnEnded
+  ]);
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({status: 'success'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <h3>Step 4: Deploy as Web App</h3>
+                    <ul>
+                        <li>Click the <strong>Save</strong> icon (disk)</li>
+                        <li>Click <strong>Deploy → New deployment</strong></li>
+                        <li>Click the gear icon next to "Select type"</li>
+                        <li>Choose <strong>Web app</strong></li>
+                        <li>Set <strong>"Execute as"</strong> to <strong>Me</strong></li>
+                        <li>Set <strong>"Who has access"</strong> to <strong>Anyone</strong></li>
+                        <li>Click <strong>Deploy</strong></li>
+                        <li>Click <strong>Authorize access</strong> and follow prompts</li>
+                    </ul>
+                </div>
+                
+                <div class="setup-step">
+                    <h3>Step 5: Copy Your Web App URL</h3>
+                    <p>After deploying, you'll see a <strong>Web app URL</strong>. Copy it and paste it below:</p>
+                </div>
+            </div>
+            
+            <div class="url-input-group">
+                <label for="scriptUrl">Your Google Apps Script URL:</label>
+                <input 
+                    type="text" 
+                    id="scriptUrl" 
+                    placeholder="https://script.google.com/macros/s/..."
+                >
+                <button class="save-url-btn" onclick="saveScriptUrl()">Save & Start Tracking</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION - Commander list URL
+        const COMMANDER_LIST_URL = 'https://script.google.com/macros/s/AKfycbz_7VCIH3Pc3CKpIXYaIfcZbwu1qrnR4d-54T8MLesjmbiIwFzn63u-KTuVA7MEIiyIdA/exec';
+        
+        // Cache for commander list
+        let commanderList = [];
+        
+        // Load commander list on page load
+        async function loadCommanderList() {
+            try {
+                const response = await fetch(COMMANDER_LIST_URL);
+                const data = await response.json();
+                commanderList = data.commanders || [];
+                console.log('Loaded', commanderList.length, 'commanders');
+            } catch (error) {
+                console.error('Error loading commander list:', error);
+                // Fallback to empty list - autocomplete just won't work
+                commanderList = [];
+            }
+        }
+        
+        loadCommanderList();
+        
+        // Set today's date as default
+        document.getElementById('date').valueAsDate = new Date();
+        
+        // Check if script URL is configured
+        function checkSetup() {
+            const scriptUrl = localStorage.getItem('commanderTrackerScriptUrl');
+            const setupWarning = document.getElementById('setupWarning');
+            const gameForm = document.getElementById('gameForm');
+            
+            if (scriptUrl) {
+                setupWarning.className = 'setup-status complete';
+                setupWarning.textContent = '✓ Connected to your Google Sheet';
+                gameForm.classList.remove('form-disabled');
+            } else {
+                setupWarning.className = 'setup-status incomplete';
+                setupWarning.textContent = '⚠️ Setup required - Click the gear icon to get started';
+                gameForm.classList.add('form-disabled');
+            }
+        }
+        
+        checkSetup();
+        
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            const savedUrl = localStorage.getItem('commanderTrackerScriptUrl');
+            if (savedUrl) {
+                document.getElementById('scriptUrl').value = savedUrl;
+            }
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+        
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement;
+            const code = codeBlock.querySelector('pre').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if (!url) {
+                alert('Please enter your Google Apps Script URL');
+                return;
+            }
+            if (!url.includes('script.google.com')) {
+                alert('Please enter a valid Google Apps Script URL');
+                return;
+            }
+            localStorage.setItem('commanderTrackerScriptUrl', url);
+            closeSettings();
+            checkSetup();
+        }
+        
+        // Scryfall autocomplete functionality
+        let debounceTimer;
+        const commanderInputs = [
+            { input: 'myCommander', results: 'myCommanderResults' },
+            { input: 'opponent1', results: 'opponent1Results' },
+            { input: 'opponent2', results: 'opponent2Results' },
+            { input: 'opponent3', results: 'opponent3Results' }
+        ];
+        
+        commanderInputs.forEach(({ input, results }) => {
+            const inputEl = document.getElementById(input);
+            const resultsEl = document.getElementById(results);
+            
+            inputEl.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                
+                clearTimeout(debounceTimer);
+                
+                if (query.length < 2) {
+                    resultsEl.classList.remove('active');
+                    return;
+                }
+                
+                debounceTimer = setTimeout(() => {
+                    searchCommanders(query, resultsEl, inputEl);
+                }, 300);
+            });
+            
+            inputEl.addEventListener('blur', () => {
+                setTimeout(() => {
+                    resultsEl.classList.remove('active');
+                }, 200);
+            });
+        });
+        
+        async function searchCommanders(query, resultsEl, inputEl) {
+            // Filter the loaded commander list
+            const matches = commanderList.filter(name => 
+                name.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 8);
+            
+            resultsEl.innerHTML = '';
+            
+            if (matches.length > 0) {
+                matches.forEach(name => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = name;
+                    item.addEventListener('click', () => {
+                        inputEl.value = name;
+                        resultsEl.classList.remove('active');
+                        updateDropdowns();
+                    });
+                    resultsEl.appendChild(item);
+                });
+                resultsEl.classList.add('active');
+            } else {
+                resultsEl.classList.remove('active');
+            }
+        }
+        
+        // Update dropdowns when commanders change
+        commanderInputs.forEach(({ input }) => {
+            document.getElementById(input).addEventListener('change', updateDropdowns);
+        });
+        
+        function updateDropdowns() {
+            const commanders = commanderInputs.map(({ input }) => {
+                const value = document.getElementById(input).value.trim();
+                return value || null;
+            }).filter(c => c !== null);
+            
+            const wentFirstSelect = document.getElementById('wentFirst');
+            const winnerSelect = document.getElementById('winner');
+            
+            const currentWentFirst = wentFirstSelect.value;
+            const currentWinner = winnerSelect.value;
+            
+            wentFirstSelect.innerHTML = '<option value="">Select...</option>';
+            winnerSelect.innerHTML = '<option value="">Select...</option>';
+            
+            commanders.forEach((commander, index) => {
+                const label = index === 0 ? `${commander} (You)` : commander;
+                
+                const wentFirstOption = document.createElement('option');
+                wentFirstOption.value = commander;
+                wentFirstOption.textContent = label;
+                wentFirstSelect.appendChild(wentFirstOption);
+                
+                const winnerOption = document.createElement('option');
+                winnerOption.value = commander;
+                winnerOption.textContent = label;
+                winnerSelect.appendChild(winnerOption);
+            });
+            
+            if (commanders.includes(currentWentFirst)) {
+                wentFirstSelect.value = currentWentFirst;
+            }
+            if (commanders.includes(currentWinner)) {
+                winnerSelect.value = currentWinner;
+            }
+        }
+        
+        // Form submission
+        document.getElementById('gameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const scriptUrl = localStorage.getItem('commanderTrackerScriptUrl');
+            if (!scriptUrl) {
+                alert('Please configure your Google Apps Script URL in settings');
+                openSettings();
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-block';
+            
+            const formData = {
+                date: document.getElementById('date').value,
+                bracket: document.getElementById('bracket').value,
+                myCommander: document.getElementById('myCommander').value.trim(),
+                opponent1: document.getElementById('opponent1').value.trim(),
+                opponent2: document.getElementById('opponent2').value.trim(),
+                opponent3: document.getElementById('opponent3').value.trim(),
+                wentFirst: document.getElementById('wentFirst').value,
+                winner: document.getElementById('winner').value,
+                turnEnded: document.getElementById('turnEnded').value
+            };
+            
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                // Show success
+                successMessage.style.display = 'block';
+                
+                // Reset form
+                document.getElementById('gameForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+                updateDropdowns();
+                
+                // Hide success message after 3 seconds
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '✗ Error recording game: ' + error.message;
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') {
+                closeSettings();
+            }
+        });
+    </script>
+</body>
+</html>
